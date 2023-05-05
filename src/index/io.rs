@@ -7,6 +7,7 @@ use faiss_sys::*;
 use std::ffi::CString;
 use std::os::raw::c_int;
 use std::ptr;
+use std::ptr::null_mut;
 
 pub use super::io_flags::IoFlags;
 
@@ -31,6 +32,22 @@ where
     }
 }
 
+pub fn serialize(index: &IndexImpl) -> Result<Vec<u8>> {
+    unsafe {
+        let mut size = 0;
+        let mut capacity = 0;
+        let mut bytes = null_mut();
+        faiss_try(serialize_index(
+            index.inner_ptr(),
+            &mut bytes,
+            &mut size,
+            &mut capacity,
+        ))?;
+        let bytes = Vec::from_raw_parts(bytes as *mut u8, size, capacity);
+        Ok(bytes)
+    }
+}
+
 /// Read an index from a file.
 ///
 /// # Error
@@ -50,6 +67,16 @@ where
             IoFlags::MEM_RESIDENT.into(),
             &mut inner,
         ))?;
+        Ok(IndexImpl::from_inner_ptr(inner))
+    }
+}
+
+pub fn deserialize(bytes: &[u8]) -> Result<IndexImpl> {
+    unsafe {
+        let size = bytes.len() as usize;
+        let bytes = bytes.as_ptr() as *const u8;
+        let mut inner = null_mut();
+        faiss_try(deserialize_index(bytes, size, &mut inner))?;
         Ok(IndexImpl::from_inner_ptr(inner))
     }
 }
@@ -83,7 +110,8 @@ where
 mod tests {
     use super::*;
     use crate::index::flat::FlatIndex;
-    use crate::index::Index;
+    use crate::index::{Index, UpcastIndex};
+
     const D: u32 = 8;
 
     #[test]
@@ -105,6 +133,24 @@ mod tests {
         let index = read_index(&filename).unwrap();
         assert_eq!(index.ntotal(), 5);
         ::std::fs::remove_file(&filepath).unwrap();
+    }
+
+    #[test]
+    fn serialize_deserialize() {
+        let mut index = FlatIndex::new_l2(D).unwrap();
+        assert_eq!(index.d(), D);
+        assert_eq!(index.ntotal(), 0);
+        let some_data = &[
+            7.5_f32, -7.5, 7.5, -7.5, 7.5, 7.5, 7.5, 7.5, -1., 1., 1., 1., 1., 1., 1., -1., 4.,
+            -4., -8., 1., 1., 2., 4., -1., 8., 8., 10., -10., -10., 10., -10., 10., 16., 16., 32.,
+            25., 20., 20., 40., 15.,
+        ];
+        index.add(some_data).unwrap();
+        assert_eq!(index.ntotal(), 5);
+
+        let bytes = serialize(&index.upcast()).unwrap();
+        let index = deserialize(&bytes).unwrap();
+        assert_eq!(index.ntotal(), 5);
     }
 
     #[test]

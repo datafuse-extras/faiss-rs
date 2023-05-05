@@ -12,13 +12,13 @@ edition = "2018"
 
 [features]
 gpu = ["faiss-sys/gpu"]
+static = ["faiss-sys/static"]
 
 [badges.maintenance]
 status = "passively-maintained"
 
 [dependencies.faiss-sys]
-version = "0.6.1"
-path = "faiss-sys"
+path = "./faiss-sys"
 
 [package.metadata.docs.rs]
 features = ["gpu"]
