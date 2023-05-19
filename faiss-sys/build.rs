@@ -32,8 +32,8 @@ fn static_link_faiss() {
     println!("cargo:rustc-link-lib=static=faiss");
     link_cxx();
     println!("cargo:rustc-link-lib=gomp");
-    println!("cargo:rustc-link-lib=blas");
-    println!("cargo:rustc-link-lib=lapack");
+    // println!("cargo:rustc-link-lib=blas");
+    // println!("cargo:rustc-link-lib=lapack");
 }
 
 fn link_cxx() {
