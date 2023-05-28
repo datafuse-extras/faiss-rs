@@ -166,6 +166,12 @@ impl IndexImpl {
             }
         }
     }
+
+    pub fn set_nprobe(&mut self, nprobe: usize) {
+        unsafe {
+            faiss_IndexIVFFlat_set_nprobe(self.inner_ptr(), nprobe);
+        }
+    }
 }
 
 #[cfg(test)]
