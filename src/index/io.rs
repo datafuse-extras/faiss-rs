@@ -3,11 +3,13 @@
 use crate::error::{Error, Result};
 use crate::faiss_try;
 use crate::index::{CpuIndex, FromInnerPtr, IndexImpl, NativeIndex};
+use bytes::Bytes;
 use faiss_sys::*;
 use std::ffi::CString;
 use std::os::raw::c_int;
 use std::ptr;
 use std::ptr::null_mut;
+use std::sync::atomic::AtomicPtr;
 
 pub use super::io_flags::IoFlags;
 
@@ -32,7 +34,7 @@ where
     }
 }
 
-pub fn serialize(index: &IndexImpl) -> Result<Vec<u8>> {
+pub unsafe fn serialize(index: &IndexImpl) -> Result<Bytes> {
     unsafe {
         let mut size = 0;
         let mut capacity = 0;
@@ -43,7 +45,8 @@ pub fn serialize(index: &IndexImpl) -> Result<Vec<u8>> {
             &mut size,
             &mut capacity,
         ))?;
-        let bytes = Vec::from_raw_parts(bytes as *mut u8, size, capacity);
+        let bytes = std::slice::from_raw_parts(bytes, size); //TODO: free memory
+        let bytes = Bytes::copy_from_slice(bytes); //TODO: avoid copy
         Ok(bytes)
     }
 }

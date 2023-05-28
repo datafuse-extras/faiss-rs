@@ -22,3 +22,6 @@ path = "./faiss-sys"
 
 [package.metadata.docs.rs]
 features = ["gpu"]
+
+[dependencies]
+bytes = "1.4.0"
