@@ -34,7 +34,7 @@ where
     }
 }
 
-pub unsafe fn serialize(index: &IndexImpl) -> Result<Bytes> {
+pub unsafe fn serialize(index: &IndexImpl) -> Result<Vec<u8>> {
     unsafe {
         let mut size = 0;
         let mut capacity = 0;
@@ -46,7 +46,7 @@ pub unsafe fn serialize(index: &IndexImpl) -> Result<Bytes> {
             &mut capacity,
         ))?;
         let bytes = std::slice::from_raw_parts(bytes, size); //TODO: free memory
-        let bytes = Bytes::copy_from_slice(bytes); //TODO: avoid copy
+        let bytes = bytes.to_vec(); //TODO: avoid copy
         Ok(bytes)
     }
 }
